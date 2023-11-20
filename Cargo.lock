@@ -690,6 +690,7 @@ dependencies = [
  "once_cell",
  "overlay",
  "rand",
+ "runtime-offsets",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -1979,6 +1980,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "runtime-offsets"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cs2",
+ "cs2-schema-cutl",
+ "cs2-schema-declaration",
+ "cs2-schema-generated",
+ "env_logger",
+ "log",
+ "obfstr",
+ "valthrun-kernel-interface",
+ "windows",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2493,6 +2510,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
 
 [[package]]
+name = "valthrun-bhop"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cs2",
+ "cs2-schema-cutl",
+ "cs2-schema-declaration",
+ "cs2-schema-generated",
+ "env_logger",
+ "log",
+ "obfstr",
+ "runtime-offsets",
+ "valthrun-kernel-interface",
+ "windows",
+]
+
+[[package]]
 name = "valthrun-driver-shared"
 version = "0.1.0"
 
@@ -2506,6 +2540,36 @@ dependencies = [
  "thiserror",
  "valthrun-driver-shared",
  "windows",
+]
+
+[[package]]
+name = "valthrun-web-radar"
+version = "0.1.0"
+dependencies = [
+ "actix",
+ "actix-files",
+ "actix-rt",
+ "actix-web",
+ "actix-web-actors",
+ "anyhow",
+ "chrono",
+ "cs2",
+ "cs2-schema-cutl",
+ "cs2-schema-declaration",
+ "cs2-schema-generated",
+ "env_logger",
+ "log",
+ "mint",
+ "nalgebra",
+ "obfstr",
+ "once_cell",
+ "runtime-offsets",
+ "serde",
+ "serde_json",
+ "tokio",
+ "valthrun-kernel-interface",
+ "windows",
+ "winres",
 ]
 
 [[package]]

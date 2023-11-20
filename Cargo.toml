@@ -9,7 +9,9 @@ members = [
     "controller",
     "cs2",
     "overlay",
-    "bhop"
+    "movement",
+    "web_radar",
+    "runtime_offsets",
 ]
 exclude = [
     "kernel/driver"
