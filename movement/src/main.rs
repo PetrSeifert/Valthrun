@@ -289,9 +289,7 @@ fn main() -> anyhow::Result<()> {
     log::info!("Starting BHop.");
     log::info!("");
     log::warn!("Attention: In order for the B-Hop script to work, please enter the following command into your game console:");
-    log::warn!(
-        r#"bind "KP_MINUS" "exec jump""#
-    );
+    log::warn!(r#"bind "KP_MINUS" "exec jump""#);
     log::warn!("And create jump.cfg with this line:");
     log::warn!("+jump; -jump");
     log::info!("");
