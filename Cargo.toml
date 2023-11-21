@@ -9,7 +9,8 @@ members = [
     "controller",
     "cs2",
     "overlay",
-    "bhop"
+    "movement",
+    "valthrun-toolkit"
 ]
 exclude = [
     "kernel/driver"

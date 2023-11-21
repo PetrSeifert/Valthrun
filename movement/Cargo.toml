@@ -1,5 +1,5 @@
 [package]
-name = "valthrun-bhop"
+name = "valthrun-movement"
 version = "0.1.0"
 edition = "2021"
 
@@ -16,3 +16,4 @@ cs2-schema-generated = { path = "../cs2-schema/generated" }
 cs2-schema-declaration = { path = "../cs2-schema/declaration" }
 cs2-schema-cutl = { path = "../cs2-schema/cutl" }
 valthrun-kernel-interface = { path = "../kernel/interface"}
+valthrun-toolkit = { path = "../valthrun-toolkit" }

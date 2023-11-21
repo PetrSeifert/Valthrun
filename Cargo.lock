@@ -293,6 +293,7 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "valthrun-kernel-interface",
+ "valthrun-toolkit",
  "windows",
  "winres",
 ]
@@ -1481,6 +1482,33 @@ dependencies = [
  "thiserror",
  "valthrun-driver-shared",
  "windows",
+]
+
+[[package]]
+name = "valthrun-movement"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cs2",
+ "cs2-schema-cutl",
+ "cs2-schema-declaration",
+ "cs2-schema-generated",
+ "env_logger",
+ "log",
+ "obfstr",
+ "valthrun-kernel-interface",
+ "valthrun-toolkit",
+ "windows",
+]
+
+[[package]]
+name = "valthrun-toolkit"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cs2",
+ "cs2-schema-generated",
+ "log",
 ]
 
 [[package]]

@@ -41,11 +41,6 @@ use cs2::{
     EntitySystem,
     Globals,
 };
-use cs2_schema_generated::{
-    definition::SchemaScope,
-    RuntimeOffset,
-    RuntimeOffsetProvider,
-};
 use enhancements::Enhancement;
 use imgui::{
     Condition,
@@ -68,6 +63,7 @@ use settings::{
     SettingsUI,
 };
 use valthrun_kernel_interface::KInterfaceError;
+use valthrun_toolkit::setup_runtime_offset_provider;
 use view::ViewController;
 use windows::Win32::{
     System::Console::GetConsoleProcessList,
@@ -82,7 +78,6 @@ use crate::{
         SpectatorsList,
         TriggerBot,
     },
-    offsets::setup_runtime_offset_provider,
     settings::save_app_settings,
     view::LocalCrosshair,
     winver::version_info,
@@ -91,7 +86,6 @@ use crate::{
 mod cache;
 mod class_name_cache;
 mod enhancements;
-mod offsets;
 mod settings;
 mod utils;
 mod view;

@@ -1,6 +1,9 @@
 use std::{
     sync::Arc,
-    time::{Duration, Instant},
+    time::{
+        Duration,
+        Instant,
+    },
 };
 
 use anyhow::Context;
@@ -11,11 +14,23 @@ use cs2::{
     EntitySystem,
 };
 use obfstr::obfstr;
-use valthrun_kernel_interface::{KeyboardState, MouseState};
+use valthrun_kernel_interface::{
+    KeyboardState,
+    MouseState,
+};
+use valthrun_toolkit::setup_runtime_offset_provider;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     GetAsyncKeyState,
-    VK_XBUTTON2, VK_A, MapVirtualKeyA, MAP_VIRTUAL_KEY_TYPE, VK_D, VK_NUMPAD0, VIRTUAL_KEY,
+    MapVirtualKeyA,
+    MAP_VIRTUAL_KEY_TYPE,
+    VIRTUAL_KEY,
+    VK_A,
+    VK_D,
+    VK_NUMPAD0,
+    VK_XBUTTON1,
+    VK_XBUTTON2,
 };
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum LogState {
     MissingLocalController,
@@ -33,7 +48,7 @@ const SC_D: u16 = 0x20;
 enum StrafeState {
     None,
     StrafeRight,
-    StrafeLeft
+    StrafeLeft,
 }
 
 impl StrafeState {
@@ -41,7 +56,7 @@ impl StrafeState {
         match self {
             Self::None => Self::None,
             Self::StrafeRight => Self::StrafeLeft,
-            Self::StrafeLeft => Self::StrafeRight
+            Self::StrafeLeft => Self::StrafeRight,
         }
     }
 
@@ -49,7 +64,7 @@ impl StrafeState {
         match self {
             Self::None => 0,
             Self::StrafeRight => 1,
-            Self::StrafeLeft => -1
+            Self::StrafeLeft => -1,
         }
     }
 }
@@ -87,31 +102,37 @@ impl Autostrafe {
         log::debug!("Send KB {:?}", self.strafe_state);
         match self.strafe_state {
             StrafeState::StrafeLeft => {
-                self.cs2.send_keyboard_state(&[
-                    KeyboardState { scane_code: SC_D, down: false },
-                ])?;
+                self.cs2.send_keyboard_state(&[KeyboardState {
+                    scane_code: SC_D,
+                    down: false,
+                }])?;
                 std::thread::sleep(Duration::from_micros(100));
-                self.cs2.send_keyboard_state(&[
-                    KeyboardState { scane_code: SC_A, down: true },
-                ])?;
-            },
+                self.cs2.send_keyboard_state(&[KeyboardState {
+                    scane_code: SC_A,
+                    down: true,
+                }])?;
+            }
             StrafeState::StrafeRight => {
-                self.cs2.send_keyboard_state(&[
-                    KeyboardState { scane_code: SC_A, down: false },
-                ])?;
+                self.cs2.send_keyboard_state(&[KeyboardState {
+                    scane_code: SC_A,
+                    down: false,
+                }])?;
                 std::thread::sleep(Duration::from_micros(100));
-                self.cs2.send_keyboard_state(&[
-                    KeyboardState { scane_code: SC_D, down: true },
-                ])?;
-            },
+                self.cs2.send_keyboard_state(&[KeyboardState {
+                    scane_code: SC_D,
+                    down: true,
+                }])?;
+            }
             StrafeState::None => {
-                self.cs2.send_keyboard_state(&[
-                    KeyboardState { scane_code: SC_A, down: false },
-                ])?;
+                self.cs2.send_keyboard_state(&[KeyboardState {
+                    scane_code: SC_A,
+                    down: false,
+                }])?;
                 std::thread::sleep(Duration::from_micros(100));
-                self.cs2.send_keyboard_state(&[
-                    KeyboardState { scane_code: SC_D, down: false },
-                ])?;
+                self.cs2.send_keyboard_state(&[KeyboardState {
+                    scane_code: SC_D,
+                    down: false,
+                }])?;
             }
         }
         Ok(())
@@ -143,10 +164,17 @@ impl Autostrafe {
 
         if time_delta > self.strafe_time_ms {
             let offset_difference = (self.strafe_total - self.strafe_applied_offset) as i32;
-            log::debug!("Applying {} pending difference from {:?}", offset_difference, self.strafe_state);
+            log::debug!(
+                "Applying {} pending difference from {:?}",
+                offset_difference,
+                self.strafe_state
+            );
             if offset_difference > 0 {
                 let pending_difference = offset_difference * self.strafe_state.sign();
-                self.cs2.send_mouse_state(&[ MouseState { last_x: pending_difference, ..Default::default() } ])?;
+                self.cs2.send_mouse_state(&[MouseState {
+                    last_x: pending_difference,
+                    ..Default::default()
+                }])?;
             }
 
             self.strafe_state = self.strafe_state.opposite();
@@ -158,13 +186,17 @@ impl Autostrafe {
         }
 
         let x = time_delta as f32 / self.strafe_time_ms as f32;
-        let offset = (x * x) / (2.0 * (x*x - x) + 1.0);
+        let offset = (x * x) / (2.0 * (x * x - x) + 1.0);
         let expected_offset = (self.strafe_total as f32 * offset) as u32;
 
         if expected_offset > self.strafe_applied_offset {
-            let pending_difference = (expected_offset - self.strafe_applied_offset) as i32 * self.strafe_state.sign();
+            let pending_difference =
+                (expected_offset - self.strafe_applied_offset) as i32 * self.strafe_state.sign();
             if pending_difference.abs() > 60 {
-                self.cs2.send_mouse_state(&[ MouseState { last_x: pending_difference, ..Default::default() } ])?;
+                self.cs2.send_mouse_state(&[MouseState {
+                    last_x: pending_difference,
+                    ..Default::default()
+                }])?;
                 self.strafe_applied_offset = expected_offset;
 
                 match self.strafe_state {
@@ -173,19 +205,21 @@ impl Autostrafe {
                         //     KeyboardState { scane_code: SC_A, down: false },
                         // ])?;
                         // std::thread::sleep(Duration::from_micros(100));
-                        self.cs2.send_keyboard_state(&[
-                            KeyboardState { scane_code: SC_A, down: true },
-                        ])?;
-                    },
+                        self.cs2.send_keyboard_state(&[KeyboardState {
+                            scane_code: SC_A,
+                            down: true,
+                        }])?;
+                    }
                     StrafeState::StrafeRight => {
                         // self.cs2.send_keyboard_state(&[
                         //     KeyboardState { scane_code: SC_D, down: false },
                         // ])?;
                         // std::thread::sleep(Duration::from_micros(100));
-                        self.cs2.send_keyboard_state(&[
-                            KeyboardState { scane_code: SC_D, down: true },
-                        ])?;
-                    },
+                        self.cs2.send_keyboard_state(&[KeyboardState {
+                            scane_code: SC_D,
+                            down: true,
+                        }])?;
+                    }
                     _ => {}
                 }
             }
@@ -198,12 +232,16 @@ impl Autostrafe {
 struct KeyState {
     name: String,
     vk: i32,
-    last_state: u16
+    last_state: u16,
 }
 
 impl KeyState {
     pub fn new(vk: VIRTUAL_KEY, name: String) -> Self {
-        KeyState { name, vk: vk.0 as i32, last_state: 0 }
+        KeyState {
+            name,
+            vk: vk.0 as i32,
+            last_state: 0,
+        }
     }
 
     pub fn update(&mut self) {
@@ -225,7 +263,7 @@ fn main() -> anyhow::Result<()> {
 
     log::info!("Valthrun BHop script v{}.", env!("CARGO_PKG_VERSION"),);
 
-    let cs2 = CS2Handle::create()?;
+    let cs2 = CS2Handle::create(false)?;
     let cs2_build_info = BuildInfo::read_build_info(&cs2).with_context(|| {
         obfstr!("Failed to load CS2 build info. CS2 version might be newer / older then expected")
             .to_string()
@@ -241,6 +279,8 @@ fn main() -> anyhow::Result<()> {
         CS2Offsets::resolve_offsets(&cs2)
             .with_context(|| obfstr!("failed to load CS2 offsets").to_string())?,
     );
+    setup_runtime_offset_provider(&cs2)?;
+
     let mut cs2_entities = EntitySystem::new(cs2.clone(), cs2_offsets.clone());
 
     // How I came up with the kebinds:
@@ -249,7 +289,11 @@ fn main() -> anyhow::Result<()> {
     log::info!("Starting BHop.");
     log::info!("");
     log::warn!("Attention: In order for the B-Hop script to work, please enter the following command into your game console:");
-    log::warn!(r#"alias XHOP_REL "-jump;"; alias XHOP_JMP "+jump; XHOP_REL;"; bind "KP_MINUS" "+XHOP_JMP""#);
+    log::warn!(
+        r#"bind "KP_MINUS" "exec jump""#
+    );
+    log::warn!("And create jump.cfg with this line:");
+    log::warn!("+jump; -jump");
     log::info!("");
 
     //log::debug!("{:X}", unsafe { MapVirtualKeyA(VK_D.0 as u32, MAP_VIRTUAL_KEY_TYPE(0)) });
@@ -281,6 +325,7 @@ fn main() -> anyhow::Result<()> {
 
     let mut auto_strafe = Autostrafe::new(cs2.clone());
     let mut log_state = LogState::Active;
+    let mut last_in_air = false;
     loop {
         cs2_entities
             .read_entities()
@@ -332,26 +377,40 @@ fn main() -> anyhow::Result<()> {
 
         let in_air = pawn.m_fFlags()? & 0x01 == 0;
         let should_jump = unsafe { GetAsyncKeyState(VK_XBUTTON2.0 as i32) != 0 };
-        if !in_air && should_jump {
-            if log_state != LogState::Active {
-                log_state = LogState::Active;
-                log::info!("Sending jumps...");
-            }
-
+        let should_edge_jump = unsafe { GetAsyncKeyState(VK_XBUTTON1.0 as i32) != 0 };
+        if in_air && !last_in_air && should_edge_jump {
             cs2.send_keyboard_state(&[KeyboardState {
                 down: true,
                 scane_code: SC_NUMPAD_MINUS,
             }])?;
-            std::thread::sleep(Duration::from_millis(1));
+            std::thread::sleep(Duration::from_millis(5));
             cs2.send_keyboard_state(&[KeyboardState {
                 down: false,
                 scane_code: SC_NUMPAD_MINUS,
             }])?;
+        }
+        last_in_air = in_air;
+
+        if !in_air && should_jump {
+            if log_state != LogState::Active {
+                log_state = LogState::Active;
+                log::info!("Sending jumps...");
+                std::thread::sleep(Duration::from_millis(15));
+                cs2.send_keyboard_state(&[KeyboardState {
+                    down: true,
+                    scane_code: SC_NUMPAD_MINUS,
+                }])?;
+                std::thread::sleep(Duration::from_millis(5));
+                cs2.send_keyboard_state(&[KeyboardState {
+                    down: false,
+                    scane_code: SC_NUMPAD_MINUS,
+                }])?;
+            }
         } else {
             match log_state {
-                LogState::Armed => {},
+                LogState::Armed => {}
                 LogState::Active => log::info!("Jump initiated, await landing..."),
-                _ => log::info!("Awaiting jump button to be pressed...")
+                _ => log::info!("Awaiting jump button to be pressed..."),
             };
 
             log_state = LogState::Armed;
