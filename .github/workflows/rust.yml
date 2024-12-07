@@ -143,7 +143,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./docker/cs2-radar-server.dockerfile
+          file: ./docker/pubg-radar-server.dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -176,13 +176,13 @@ jobs:
           cache-on-failure: true
 
       - name: Build
-        run: cargo build --verbose --release --bin radar-client-standalone
+        run: cargo build --verbose --release --bin radar-enhancer
         env:
           RUSTFLAGS: -Ctarget-feature=+crt-static
 
       - name: Upload release build to portal
         shell: bash
-        run: .github/workflows/artifact_upload.sh cs2-radar-client target/release/radar-client-standalone.exe target/release/radar_client_standalone.pdb
+        run: .github/workflows/artifact_upload.sh pubg-radar-client target/release/radar-enhancer.exe target/release/radar_client_standalone.pdb
         if: ${{ github.event_name != 'pull_request' }}
         env:
           ARTIFACT_API_KEY: ${{ secrets.ARTIFACT_API_KEY }}
@@ -225,7 +225,7 @@ jobs:
 
       - name: Upload release build to portal
         shell: bash
-        run: .github/workflows/artifact_upload.sh cs2-overlay target/release/controller.exe target/release/controller.pdb
+        run: .github/workflows/artifact_upload.sh pubg-overlay target/release/controller.exe target/release/controller.pdb
         if: ${{ github.event_name != 'pull_request' }}
         env:
           ARTIFACT_API_KEY: ${{ secrets.ARTIFACT_API_KEY }}

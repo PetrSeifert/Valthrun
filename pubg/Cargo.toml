@@ -1,0 +1,19 @@
+[package]
+name = "pubg"
+version.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = { workspace = true }
+obfstr = { workspace = true }
+log = { workspace = true }
+serde_json = "1.0.104"
+nalgebra = { workspace = true }
+cs2-schema-cutl = { path = "../cs2-schema/cutl" }
+utils-state = { path = "../utils/state" }
+raw_struct = { workspace = true }
+env_logger = { workspace = true }
+valthrun-driver-interface = { path = "../driver/interface" }
+windows-sys = { version = "0.59", features = ["Win32_System_Memory"] }

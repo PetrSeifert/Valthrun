@@ -87,8 +87,8 @@ impl InterfaceError {
             }
             &InterfaceError::ProcessUnknown => {
                 [
-                    obfstr!("Could not find CS2 process."),
-                    obfstr!("Please start CS2 prior to executing this application!"),
+                    obfstr!("Could not find Pubg process."),
+                    obfstr!("Please start Pubg prior to executing this application!"),
                 ].join("\n")
             }
             _ => return None,

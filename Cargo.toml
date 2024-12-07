@@ -3,24 +3,14 @@ resolver = "2"
 members = [
     "utils/state",
 
-    "cs2-schema/definition",
     "cs2-schema/cutl",
-    "cs2-schema/generated",
-    "cs2-schema/dumper",
 
     "driver/protocol",
     "driver/interface",
     "driver/driver-um",
 
-    "radar/client",
-    "radar/client-standalone",
-    "radar/server",
-    "radar/server-standalone",
-    "radar/shared",
-
-    "cs2",
-    "overlay",
-    "controller",
+    "enhancer",
+    "pubg",
 ]
 
 [workspace.package]

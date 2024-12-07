@@ -1,0 +1,12 @@
+[package]
+name = "enhancer"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { version = "4.4.8", features = ["derive"] }
+pubg = { path = "../pubg" }
+env_logger = { workspace = true }
+log = { workspace = true }
+utils-state = { path = "../utils/state" }
