@@ -5,3 +5,4 @@ _*
 .idea
 kernel
 docs
+**/pdb_cache/

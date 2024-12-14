@@ -1,3 +1,6 @@
+#![feature(array_try_from_fn)]
+#![feature(sync_unsafe_cell)]
+
 mod handle;
 pub use handle::*;
 
@@ -9,6 +12,10 @@ pub mod schema;
 pub mod state;
 
 mod decrypt;
+
+mod encrypted_ptr;
+pub use encrypted_ptr::*;
+
 mod pattern;
 
 pub use pattern::*;

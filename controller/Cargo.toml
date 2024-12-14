@@ -1,0 +1,23 @@
+[package]
+name = "pubg_controller"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+log = { workspace = true }
+env_logger = { workspace = true }
+obfstr = { workspace = true }
+nalgebra = { workspace = true }
+
+pubg = { path = "../pubg" }
+utils-state = { path = "../utils/state" }
+
+windows = { version = "0.53.0", features = [
+    "Win32_System_SystemInformation",
+    "Win32_Foundation",
+] }
+
+[build-dependencies]
+winres = "0.1"
+chrono = "0.4.26"

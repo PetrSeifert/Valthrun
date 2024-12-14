@@ -3,13 +3,11 @@ resolver = "2"
 members = [
     "utils/state",
 
-    "cs2-schema/cutl",
-
     "driver/protocol",
     "driver/interface",
     "driver/driver-um",
 
-    "enhancer",
+    "controller",
     "pubg",
 ]
 

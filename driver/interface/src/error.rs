@@ -23,6 +23,9 @@ pub enum InterfaceError {
     #[error("command failed: {message}")]
     CommandGenericError { message: String },
 
+    #[error("feature is not supported")]
+    FeatureUnsupported,
+
     #[error("the driver is unavailable")]
     InitializeDriverUnavailable,
 
@@ -40,6 +43,9 @@ pub enum InterfaceError {
 
     #[error("metrics report type too long")]
     ReportTypeTooLong,
+
+    #[error("failed to allocate a properly sized buffer")]
+    BufferAllocationFailed,
 }
 
 pub type IResult<T> = std::result::Result<T, InterfaceError>;
@@ -87,8 +93,8 @@ impl InterfaceError {
             }
             &InterfaceError::ProcessUnknown => {
                 [
-                    obfstr!("Could not find Pubg process."),
-                    obfstr!("Please start Pubg prior to executing this application!"),
+                    obfstr!("Could not find CS2 process."),
+                    obfstr!("Please start CS2 prior to executing this application!"),
                 ].join("\n")
             }
             _ => return None,

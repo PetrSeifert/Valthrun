@@ -1,14 +1,8 @@
-use std::{
-    mem::transmute,
-};
+use std::mem::transmute;
 
 use anyhow::{
     anyhow,
     Context,
-};
-use cs2_schema_cutl::{
-    CStringUtil,
-    PtrCStr,
 };
 use obfstr::obfstr;
 use raw_struct::{
@@ -27,6 +21,10 @@ use windows_sys::Win32::System::Memory::{
 };
 
 use crate::{
+    schema::{
+        CStringUtil,
+        PtrCStr,
+    },
     Module,
     StatePubgHandle,
     StatePubgMemory,
@@ -34,8 +32,8 @@ use crate::{
 
 type XenuineDecrypt = unsafe extern "fastcall" fn(u64, u64) -> u64;
 
-pub const DECRYPT_OFFSET: u64 = 0x0E804828;
-pub const G_NAMES_OFFSET: u64 = 0x104B994;
+pub const DECRYPT_OFFSET: u64 = 0xEE00D28;
+pub const G_NAMES_OFFSET: u64 = 0x10AB6AE8;
 
 pub struct StateDecrypt {
     decrypt_key: u64,
@@ -49,12 +47,16 @@ impl State for StateDecrypt {
         unsafe {
             let pubg_handle = _states.resolve::<StatePubgHandle>(())?;
             let memory = _states.resolve::<StatePubgMemory>(())?;
-            let decrypt_ptr = pubg_handle.memory_address(Module::Game, DECRYPT_OFFSET)?;
+            let decrypt_ptr = u64::read_object(
+                memory.view(),
+                pubg_handle.memory_address(Module::Game, DECRYPT_OFFSET)?,
+            )
+            .map_err(|err| anyhow::anyhow!("{}", err))? as u64;
             let tmp1_add = i32::read_object(memory.view(), decrypt_ptr + 3)
                 .map_err(|err| anyhow::anyhow!("{}", err))? as u64;
             let decrypt_key = tmp1_add + decrypt_ptr + 7;
 
-            let mut code_buff = vec![0u8; 1024];
+            let mut code_buff: [u8; 1024] = [0; 1024];
             code_buff[0] = 0x90;
             code_buff[1] = 0x90;
             memory
@@ -67,7 +69,7 @@ impl State for StateDecrypt {
                     size: 1022,
 
                     member: None,
-                    object: "PtrCStr".into(),
+                    object: "unknown".into(),
                 })?;
             code_buff[2] = 0x48;
             code_buff[3] = 0x8B;
@@ -96,6 +98,7 @@ impl State for StateDecrypt {
                 executable_memory as *mut u8,
                 code_buff.len(),
             );
+
             let xenuine_decrypt_fn = transmute(executable_memory);
 
             Ok(Self {
@@ -109,17 +112,18 @@ impl State for StateDecrypt {
 impl StateDecrypt {
     #[inline]
     pub unsafe fn decrypt(&self, a: u64) -> u64 {
-        (self.xenuine_decrypt_fn)(self.decrypt_key, a)
+        let result = (self.xenuine_decrypt_fn)(self.decrypt_key, a);
+        result
     }
 
     #[inline]
-    fn decrypt_c_index(value: u32) -> u32 {
+    pub fn decrypt_c_index(value: u32) -> u32 {
         let rotated = value.rotate_left(0x0E) ^ 0x08928651;
         rotated ^ (rotated << 0x10) ^ 0xD11B42D7
     }
 
     #[inline]
-    fn get_gname_by_id(&self, states: &StateRegistry, id: u32) -> anyhow::Result<String> {
+    pub fn get_gname_by_id(&self, states: &StateRegistry, id: u32) -> anyhow::Result<String> {
         unsafe {
             let pubg_handle = states.resolve::<StatePubgHandle>(())?;
             let memory = states.resolve::<StatePubgMemory>(())?;
@@ -133,13 +137,13 @@ impl StateDecrypt {
 
             let f_name_ptr =
                 u64::read_object(memory.view(), g_names_address + ((id as u64) / 0x402c) * 8)
-                    .map_err(|err| anyhow::anyhow!("{}", err))?;
+                    .map_err(|err| anyhow::anyhow!("{}", err))? as u64;
             let f_name = u64::read_object(memory.view(), f_name_ptr + ((id as u64) % 0x402c) * 8)
-                .map_err(|err| anyhow::anyhow!("{}", err))?;
+                .map_err(|err| anyhow::anyhow!("{}", err))? as u64;
             PtrCStr::read_object(memory.view(), f_name + 0x10 + 0x08)
                 .map_err(|e| anyhow!(e))?
                 .read_string(memory.view())?
-                .context("model name nullptr")
+                .context("gname nullptr")
         }
     }
 }

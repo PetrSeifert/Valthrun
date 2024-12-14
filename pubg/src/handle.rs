@@ -26,11 +26,12 @@ use utils_state::{
     StateRegistry,
 };
 use valthrun_driver_interface::{
+    DirectoryTableType,
     DriverFeature,
     DriverInterface,
+    InterfaceError,
     KeyboardState,
     MouseState,
-    ProcessFilter,
     ProcessId,
     ProcessModuleInfo,
     ProcessProtectionMode,
@@ -92,16 +93,35 @@ impl PubgHandle {
             .driver_features()
             .contains(DriverFeature::ProcessProtectionKernel)
         {
+            /*
+             * Please no not analyze me:
+             * https://www.unknowncheats.me/wiki/Valve_Anti-Cheat:VAC_external_tool_detection_(and_more)
+             *
+             * Even tough we don't have open handles to Pubg we don't want anybody to read our process.
+             */
             if let Err(err) = interface.toggle_process_protection(ProcessProtectionMode::Kernel) {
                 log::warn!("Failed to enable process protection: {}", err)
             };
         }
 
-        let (process_id, modules) = interface.request_modules(&ProcessFilter::Id { id: 31188 })?;
+        let process = interface
+            .list_processes()?
+            .into_iter()
+            .filter(|process| {
+                process.get_image_base_name().unwrap_or_default() == obfstr!("TslGame.exe")
+            })
+            .collect::<Vec<_>>();
+        let process = if process.is_empty() {
+            return Err(InterfaceError::ProcessUnknown.into());
+        } else {
+            process.last().unwrap()
+        };
+
+        let modules = interface.list_modules(process.process_id, DirectoryTableType::Default)?;
         log::debug!(
             "{}. Process id {}",
             obfstr!("Successfully initialized Pubg handle"),
-            process_id
+            process.process_id
         );
 
         log::trace!("{} ({})", obfstr!("Pubg modules"), modules.len());
@@ -118,7 +138,7 @@ impl PubgHandle {
             weak_self: weak_self.clone(),
             metrics,
             modules,
-            process_id,
+            process_id: process.process_id,
 
             ke_interface: interface,
         }))
@@ -167,19 +187,24 @@ impl PubgHandle {
     pub fn memory_address(&self, module: Module, offset: u64) -> anyhow::Result<u64> {
         Ok(self
             .get_module_info(module)
-            .context("invalid module")?
+            .with_context(|| format!("{} {}", obfstr!("missing module"), module.get_module_name()))?
             .base_address as u64
             + offset)
     }
 
     pub fn read_sized<T: Copy>(&self, address: u64) -> anyhow::Result<T> {
-        Ok(self.ke_interface.read(self.process_id, address)?)
+        Ok(self
+            .ke_interface
+            .read(self.process_id, DirectoryTableType::Default, address)?)
     }
 
     pub fn read_slice<T: Copy>(&self, address: u64, buffer: &mut [T]) -> anyhow::Result<()> {
-        Ok(self
-            .ke_interface
-            .read_slice(self.process_id, address, buffer)?)
+        Ok(self.ke_interface.read_slice(
+            self.process_id,
+            DirectoryTableType::Default,
+            address,
+            buffer,
+        )?)
     }
 
     pub fn read_string(
@@ -223,8 +248,12 @@ impl PubgHandle {
 
         let mut buffer = Vec::<u8>::with_capacity(length);
         buffer.resize(length, 0);
-        self.ke_interface
-            .read_slice(self.process_id, address, &mut buffer)?;
+        self.ke_interface.read_slice(
+            self.process_id,
+            DirectoryTableType::Default,
+            address,
+            &mut buffer,
+        )?;
 
         for (index, window) in buffer.windows(pattern.length()).enumerate() {
             if !pattern.is_matching(window) {
@@ -239,7 +268,9 @@ impl PubgHandle {
 
     pub fn resolve_signature(&self, module: Module, signature: &Signature) -> anyhow::Result<u64> {
         log::trace!("Resolving '{}' in {:?}", signature.debug_name, module);
-        let module_info = self.get_module_info(module).context("invalid module")?;
+        let module_info = self.get_module_info(module).with_context(|| {
+            format!("{} {}", obfstr!("missing module"), module.get_module_name())
+        })?;
 
         let inst_offset = self
             .find_pattern(
