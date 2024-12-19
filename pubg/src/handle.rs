@@ -192,6 +192,13 @@ impl PubgHandle {
             + offset)
     }
 
+    pub fn module_size(&self, module: Module) -> anyhow::Result<u64> {
+        Ok(self
+            .get_module_info(module)
+            .with_context(|| format!("{} {}", obfstr!("missing module"), module.get_module_name()))?
+            .module_size)
+    }
+
     pub fn read_sized<T: Copy>(&self, address: u64) -> anyhow::Result<T> {
         Ok(self
             .ke_interface

@@ -4,5 +4,5 @@ pub use cstr::*;
 mod client;
 pub use client::*;
 
-mod array;
-pub use array::*;
+mod encrypted_array;
+pub use encrypted_array::*;

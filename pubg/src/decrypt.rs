@@ -12,6 +12,7 @@ use raw_struct::{
 };
 use utils_state::{
     State,
+    StateCacheType,
     StateRegistry,
 };
 use windows_sys::Win32::System::Memory::{
@@ -32,8 +33,8 @@ use crate::{
 
 type XenuineDecrypt = unsafe extern "fastcall" fn(u64, u64) -> u64;
 
-pub const DECRYPT_OFFSET: u64 = 0xEE00D28;
-pub const G_NAMES_OFFSET: u64 = 0x10AB6AE8;
+pub const DECRYPT_OFFSET: u64 = 0xE790128;
+pub const G_NAMES_OFFSET: u64 = 0x104C7068;
 
 pub struct StateDecrypt {
     decrypt_key: u64,
@@ -106,6 +107,10 @@ impl State for StateDecrypt {
                 xenuine_decrypt_fn,
             })
         }
+    }
+
+    fn cache_type() -> StateCacheType {
+        StateCacheType::Volatile
     }
 }
 

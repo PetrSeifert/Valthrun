@@ -4,7 +4,6 @@ use anyhow::Context;
 use raw_struct::{
     builtins::Ptr64,
     Copy,
-    Reference,
 };
 use utils_state::{
     State,
@@ -16,12 +15,9 @@ use crate::{
     decrypt::StateDecrypt,
     schema::{
         AActor,
-        Entry,
         TArray,
-        ENTRY_OFFSET,
     },
-    Module,
-    StatePubgHandle,
+    state::StateWorld,
     StatePubgMemory,
 };
 
@@ -30,17 +26,9 @@ impl State for StateActorList {
     type Parameter = ();
 
     fn create(states: &StateRegistry, _: Self::Parameter) -> anyhow::Result<Self> {
-        let handle = states.resolve::<StatePubgHandle>(())?;
         let memory = states.resolve::<StatePubgMemory>(())?;
         let decrypt = states.resolve::<StateDecrypt>(())?;
-
-        let base_address = handle.memory_address(Module::Game, 0x0)?;
-        let entry = Reference::<dyn Entry>::new(memory.clone(), base_address + ENTRY_OFFSET);
-        let u_world = entry
-            .u_world()
-            .context("u_world nullptr")?
-            .value_reference(memory.view_arc(), &decrypt)
-            .context("nullptr")?;
+        let u_world = states.resolve::<StateWorld>(())?;
 
         let u_level = u_world
             .u_level()

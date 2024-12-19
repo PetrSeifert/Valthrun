@@ -5,7 +5,6 @@ members = [
 
     "driver/protocol",
     "driver/interface",
-    "driver/driver-um",
 
     "controller",
     "pubg",

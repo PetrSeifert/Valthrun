@@ -300,12 +300,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lazy_static"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
-
-[[package]]
 name = "libc"
 version = "0.2.167"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -469,7 +463,9 @@ dependencies = [
  "log",
  "nalgebra",
  "obfstr",
+ "once_cell",
  "pubg",
+ "raw_struct",
  "utils-state",
  "windows 0.53.0",
  "winres",
@@ -747,18 +743,6 @@ name = "valthrun-driver-protocol"
 version = "0.1.0"
 dependencies = [
  "bitflags",
-]
-
-[[package]]
-name = "valthrun-driver-um"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "env_logger",
- "lazy_static",
- "log",
- "valthrun-driver-protocol",
- "windows 0.48.0",
 ]
 
 [[package]]

@@ -6,6 +6,8 @@ use std::{
         Duration,
         Instant,
     },
+    io::{self,Write},
+    thread,
 };
 
 use enhancements::Enhancement;
@@ -16,7 +18,11 @@ use pubg::{
     StatePubgHandle,
     StatePubgMemory,
 };
-use utils::show_critical_error;
+use utils::{
+    flush_frame_logs,
+    init,
+    show_critical_error,
+};
 use utils_state::StateRegistry;
 
 use crate::{
@@ -62,10 +68,7 @@ impl Application {
 }
 
 fn main() {
-    env_logger::builder()
-        .filter_level(log::LevelFilter::Info)
-        .parse_default_env()
-        .init();
+    utils::init().expect("Failed to initialize logger");
 
     if let Err(err) = real_main() {
         show_critical_error(&format!("{:#}", err));
@@ -137,6 +140,7 @@ fn real_main() -> anyhow::Result<()> {
             }
         }
 
+        // Update game state
         if let Err(err) = app.borrow_mut().update() {
             if update_fail_count >= 10 {
                 log::error!(
@@ -147,10 +151,17 @@ fn real_main() -> anyhow::Result<()> {
 
                 update_timeout = Some((Instant::now(), Duration::from_secs(1)));
                 update_fail_count = 0;
+                utils::flush_frame_logs();
                 continue;
             } else {
                 update_fail_count += 1;
             }
         }
+
+        // Update display
+        utils::flush_frame_logs();
+        
+        // Control frame rate
+        thread::sleep(Duration::from_millis(50));
     }
 }

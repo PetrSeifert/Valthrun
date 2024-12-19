@@ -22,21 +22,26 @@ use raw_struct::{
     Viewable,
 };
 
+use crate::decrypt;
+
 #[allow(clippy::len_without_is_empty)]
-pub trait Array<T: ?Sized> {
-    fn start_address(&self) -> u64;
+pub trait EncryptedArray<T: ?Sized> {
+    fn start_address(&self, decrypt: &decrypt::StateDecrypt) -> u64;
 
-    fn len(&self) -> i32;
-
-    fn capacity(&self) -> i32;
+    fn len(&self) -> Option<usize>;
 }
 
-impl<T: FromMemoryView> dyn Array<T> {
-    pub fn element_at(&self, memory: &dyn MemoryView, index: usize) -> Result<T, AccessError> {
+impl<T: FromMemoryView> dyn EncryptedArray<T> {
+    pub fn element_at(
+        &self,
+        memory: &dyn MemoryView,
+        index: usize,
+        decrypt: &decrypt::StateDecrypt,
+    ) -> Result<T, AccessError> {
         let offset = (index * mem::size_of::<T>()) as u64;
-        T::read_object(memory, self.start_address() + offset).map_err(|err| AccessError {
+        T::read_object(memory, self.start_address(decrypt) + offset).map_err(|err| AccessError {
             source: err,
-            offset: self.start_address() + offset,
+            offset: self.start_address(decrypt) + offset,
             size: mem::size_of::<T>(),
             mode: AccessMode::Read,
             object: "[..]".into(),
@@ -48,6 +53,7 @@ impl<T: FromMemoryView> dyn Array<T> {
         &self,
         memory: &dyn MemoryView,
         range: Range<usize>,
+        decrypt: &decrypt::StateDecrypt,
     ) -> Result<Vec<T>, AccessError> {
         let element_count = range.end - range.start;
         let mut result = Vec::with_capacity(element_count);
@@ -57,7 +63,7 @@ impl<T: FromMemoryView> dyn Array<T> {
                 result.as_mut_ptr() as *mut u8,
                 element_count * mem::size_of::<T>(),
             );
-            let offset = self.start_address() + (range.start * mem::size_of::<T>()) as u64;
+            let offset = self.start_address(decrypt) + (range.start * mem::size_of::<T>()) as u64;
 
             memory
                 .read_memory(offset, buffer)
@@ -77,27 +83,33 @@ impl<T: FromMemoryView> dyn Array<T> {
     }
 }
 
-impl<T: ?Sized + Viewable<T>> dyn Array<T> {
-    pub fn element_reference(&self, memory: Arc<dyn MemoryView>, index: usize) -> Reference<T> {
+impl<T: ?Sized + Viewable<T>> dyn EncryptedArray<T> {
+    pub fn element_reference(
+        &self,
+        memory: Arc<dyn MemoryView>,
+        index: usize,
+        decrypt: &decrypt::StateDecrypt,
+    ) -> Reference<T> {
         let offset = (index * T::MEMORY_SIZE) as u64;
-        Reference::new(memory, self.start_address() + offset)
+        Reference::new(memory, self.start_address(decrypt) + offset)
     }
 
     pub fn elements_reference(
         &self,
         memory: Arc<dyn MemoryView>,
         range: Range<usize>,
+        decrypt: &decrypt::StateDecrypt,
     ) -> Vec<Reference<T>> {
         Vec::from_iter(range.map(|index| {
             Reference::new(
                 memory.clone(),
-                self.start_address() + (index * T::MEMORY_SIZE) as u64,
+                self.start_address(decrypt) + (index * T::MEMORY_SIZE) as u64,
             )
         }))
     }
 }
 
-impl<T: ?Sized + Viewable<T>> dyn Array<T>
+impl<T: ?Sized + Viewable<T>> dyn EncryptedArray<T>
 where
     T::Implementation<T::Memory>: marker::Copy,
 {
@@ -105,11 +117,12 @@ where
         &self,
         memory: &dyn MemoryView,
         index: usize,
+        decrypt: &decrypt::StateDecrypt,
     ) -> Result<Copy<T>, AccessError> {
         let offset = (index * T::MEMORY_SIZE) as u64;
-        Copy::read_object(memory, self.start_address() + offset).map_err(|err| AccessError {
+        Copy::read_object(memory, self.start_address(decrypt) + offset).map_err(|err| AccessError {
             source: err,
-            offset: self.start_address() + offset,
+            offset: self.start_address(decrypt) + offset,
             size: T::MEMORY_SIZE,
             mode: AccessMode::Read,
             object: format!("[{}]", T::name()).into(),
@@ -121,6 +134,7 @@ where
         &self,
         memory: &dyn MemoryView,
         range: Range<usize>,
+        decrypt: &decrypt::StateDecrypt,
     ) -> Result<Vec<Copy<T>>, AccessError> {
         let element_count = range.end - range.start;
         let mut result = Vec::<T::Memory>::with_capacity(element_count);
@@ -130,7 +144,7 @@ where
                 result.as_mut_ptr() as *mut u8,
                 element_count * T::MEMORY_SIZE,
             );
-            let offset = self.start_address() + (range.start * T::MEMORY_SIZE) as u64;
+            let offset = self.start_address(decrypt) + (range.start * T::MEMORY_SIZE) as u64;
 
             memory
                 .read_memory(offset, buffer)
@@ -150,9 +164,9 @@ where
     }
 }
 
-pub trait SizedArray<T: ?Sized, const N: usize>: Array<T> {}
+pub trait SizedEncryptedArray<T: ?Sized, const N: usize>: EncryptedArray<T> {}
 
-impl<T: ?Sized, const N: usize> dyn SizedArray<T, N> {
+impl<T: ?Sized, const N: usize> dyn SizedEncryptedArray<T, N> {
     pub fn len(&self) -> usize {
         N
     }
