@@ -25,6 +25,7 @@ pub enum CS2Offset {
 
     CCVars,
     SchemaSystem,
+    FileSystemStdio,
 }
 
 impl CS2Offset {
@@ -38,6 +39,7 @@ impl CS2Offset {
             CS2Offset::NetworkGameClientInstance,
             CS2Offset::CCVars,
             CS2Offset::SchemaSystem,
+            CS2Offset::FileSystemStdio,
         ]
     }
 
@@ -51,6 +53,7 @@ impl CS2Offset {
             Self::NetworkGameClientInstance => "network-game-client-instance",
             Self::CCVars => "ccvars",
             Self::SchemaSystem => "schema-system",
+            Self::FileSystemStdio => "file-system-stdio",
         }
     }
 
@@ -124,6 +127,15 @@ impl CS2Offset {
                 Signature::relative_address(
                     obfstr!("schema system instance"),
                     obfstr!("48 8B 0D ? ? ? ? 48 8B 55 A0"),
+                    0x03,
+                    0x07,
+                ),
+            ),
+            Self::FileSystemStdio => (
+                Module::Engine,
+                Signature::relative_address(
+                    obfstr!("file system stdio"),
+                    obfstr!("48 8B 0D ? ? ? ? 4C 8D 4D 30 45"),
                     0x03,
                     0x07,
                 ),
