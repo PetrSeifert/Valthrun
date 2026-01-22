@@ -19,6 +19,7 @@ members = [
     "cs2",
     "overlay",
     "controller",
+    "controller-gamebar",
 ]
 
 [workspace.package]
